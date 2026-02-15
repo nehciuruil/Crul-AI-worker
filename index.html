@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Workers AI 网站</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    #prompt-input {
+      width: 100%;
+      height: 120px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      resize: none;
+    }
+    #send-btn {
+      padding: 10px 20px;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #send-btn:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+    #result-area {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      min-height: 200px;
+      white-space: pre-wrap; /* 保留换行 */
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+    .error {
+      color: #ff4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI 问答助手</h1>
+    <textarea id="prompt-input" placeholder="请输入你的问题，比如：解释什么是Cloudflare Workers？"></textarea>
+    <button id="send-btn" onclick="sendPrompt()">发送</button>
+    <div id="result-area"></div>
+  </div>
+
+  <script>
+    // 替换为你的Workers部署地址（后续部署后获取）
+    const WORKER_URL = "https://divine-lab-bb37.nehciuruil.workers.dev";
+
+    async function sendPrompt() {
+      const input = document.getElementById('prompt-input');
+      const btn = document.getElementById('send-btn');
+      const resultArea = document.getElementById('result-area');
+      
+      const prompt = input.value.trim();
+      if (!prompt) {
+        alert('请输入问题！');
+        return;
+      }
+
+      // 状态更新：禁用按钮，显示加载中
+      btn.disabled = true;
+      resultArea.innerHTML = '<div class="loading">AI正在思考...</div>';
+
+      try {
+        // 调用Workers后端接口
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt: prompt })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          // 展示AI回答
+          resultArea.textContent = data.content;
+        } else {
+          resultArea.innerHTML = `<div class="error">错误：${data.message}</div>`;
+        }
+      } catch (error) {
+        resultArea.innerHTML = `<div class="error">网络错误：${error.message}</div>`;
+      } finally {
+        // 恢复按钮状态
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
